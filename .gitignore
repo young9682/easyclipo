@@ -1,0 +1,16 @@
+# Node / 前端
+node_modules/
+dist/
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# Python（遗留）
+__pycache__/
+*.pyc
+*.pyo
+
+# 其他
+*.log
+.zcode/
