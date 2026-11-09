@@ -17,6 +17,16 @@ pub fn clipboard_sequence_number() -> u32 {
     unsafe { GetClipboardSequenceNumber() }
 }
 
+/// 注册自定义剪贴板格式（如 "image/png"、"FileContents"），返回格式 ID
+pub fn register_format(name: &str) -> Option<u32> {
+    clipboard_win::raw::register_format(name).map(|id| id.get())
+}
+
+/// 注册 "FileContents" 格式 ID（OLE 虚拟文件流）
+pub fn registered_file_contents() -> Option<u16> {
+    register_format("FileContents").map(|id| id as u16)
+}
+
 /// 写回文件列表（CF_HDROP）
 pub fn set_files(paths: &[String]) -> Result<(), String> {
     if paths.is_empty() {
