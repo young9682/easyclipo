@@ -11,7 +11,7 @@ const TYPE_OPTIONS: Array<{ value: ContentType | null; label: string }> = [
   { value: "file", label: "文件" },
 ];
 
-export function SearchBar({ onOpenSettings }: { onOpenSettings: () => void }) {
+export function SearchBar() {
   const setQuery = useClips((s) => s.setQuery);
   const setTypeFilter = useClips((s) => s.setTypeFilter);
   const [text, setText] = useState("");
@@ -28,13 +28,13 @@ export function SearchBar({ onOpenSettings }: { onOpenSettings: () => void }) {
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="搜索剪贴板内容…"
-        className="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-100 outline-none placeholder-zinc-500 focus:border-sky-500"
+        className="min-w-0 flex-1 rounded-lg border border-paper-deep bg-cloud px-3 py-1.5 text-sm text-ink outline-none placeholder-ink-ghost transition-colors focus:border-bamboo focus:ring-2 focus:ring-bamboo-glow"
       />
       <select
         onChange={(e) =>
           setTypeFilter((e.target.value || null) as ContentType | null)
         }
-        className="cursor-pointer rounded-md border border-zinc-700 bg-zinc-800 px-2 py-1.5 text-sm text-zinc-300 outline-none"
+        className="cursor-pointer rounded-lg border border-paper-deep bg-cloud px-2 py-1.5 text-sm text-ink-soft outline-none transition-colors focus:border-bamboo"
       >
         {TYPE_OPTIONS.map((o) => (
           <option key={o.label} value={o.value ?? ""}>
@@ -42,13 +42,6 @@ export function SearchBar({ onOpenSettings }: { onOpenSettings: () => void }) {
           </option>
         ))}
       </select>
-      <button
-        title="设置"
-        onClick={onOpenSettings}
-        className="rounded-md px-2 py-1.5 text-lg leading-none hover:bg-zinc-800"
-      >
-        ⚙️
-      </button>
     </div>
   );
 }

@@ -62,9 +62,13 @@ export function ClipItem({ clip }: { clip: ClipRow }) {
     <div
       ref={ref}
       onDoubleClick={onCopy}
-      className="group relative flex cursor-pointer gap-2.5 rounded-lg border border-transparent p-2.5 hover:border-zinc-700 hover:bg-zinc-800/60"
+      className={`group relative flex cursor-pointer gap-3 rounded-xl border bg-cloud p-3 shadow-[0_1px_3px_var(--color-shadow)] transition-all hover:border-bamboo-glow hover:shadow-[0_2px_8px_var(--color-shadow-deep)] ${
+        clip.pinned
+          ? "border-bamboo-glow border-l-2 border-l-bamboo"
+          : "border-paper-deep"
+      }`}
     >
-      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-800 text-base">
+      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-paper-warm text-base">
         {TYPE_ICONS[clip.contentType]}
       </div>
 
@@ -74,27 +78,27 @@ export function ClipItem({ clip }: { clip: ClipRow }) {
             <img
               src={imgSrc}
               alt="剪贴板图片"
-              className="max-h-40 rounded-md border border-zinc-700"
+              className="max-h-40 rounded-lg border border-paper-deep"
             />
           ) : (
-            <div className="h-20 w-full animate-pulse rounded-md bg-zinc-800" />
+            <div className="h-20 w-full animate-pulse rounded-lg bg-paper-warm" />
           )
         ) : (
-          <p className="line-clamp-2 whitespace-pre-wrap break-all text-sm text-zinc-200">
+          <p className="line-clamp-2 whitespace-pre-wrap break-all text-sm leading-relaxed text-ink-soft">
             {isFile
               ? `📄 ${filePaths[0]}${filePaths.length > 1 ? ` 等 ${filePaths.length} 个文件` : ""}`
               : preview}
           </p>
         )}
 
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-zinc-500">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-ink-faint">
           <span>{TYPE_LABELS[clip.contentType]}</span>
           <select
             value={clip.category}
             onChange={(e) => changeCategory(clip.id, e.target.value)}
             onClick={(e) => e.stopPropagation()}
             onDoubleClick={(e) => e.stopPropagation()}
-            className="cursor-pointer rounded bg-transparent text-zinc-400 outline-none hover:bg-zinc-800 focus:bg-zinc-800 [&>option]:bg-zinc-800"
+            className="cursor-pointer rounded bg-transparent text-ink-faint outline-none transition-colors hover:bg-paper-warm hover:text-ink-soft focus:bg-paper-warm [&>option]:bg-cloud [&>option]:text-ink"
           >
             {CATEGORY_OPTIONS.map((c) => (
               <option key={c} value={c}>
@@ -104,38 +108,46 @@ export function ClipItem({ clip }: { clip: ClipRow }) {
           </select>
           <span>{formatRelative(clip.createdAt)}</span>
           {clip.isSensitive && (
-            <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-rose-400">
+            <span className="rounded-full bg-cinnabar-bg px-1.5 py-0.5 font-medium text-cinnabar">
               敏感
             </span>
           )}
           {clip.isSynced && (
-            <span className="rounded bg-sky-500/15 px-1.5 py-0.5 text-sky-400">
+            <span className="rounded-full bg-bamboo-mist px-1.5 py-0.5 text-bamboo">
               已同步
             </span>
           )}
-          {clip.pinned && <span className="text-amber-400">📌 已置顶</span>}
+          {clip.pinned && (
+            <span className="rounded-full bg-bamboo-mist px-1.5 py-0.5 text-bamboo">
+              📌 已置顶
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="absolute right-2.5 top-2.5 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         <button
           title="复制回剪贴板（双击条目亦可）"
           onClick={onCopy}
-          className="rounded-md bg-zinc-800 px-2 py-1 text-xs text-zinc-300 hover:bg-sky-600 hover:text-white"
+          className={`rounded-md px-2 py-1 text-xs transition-colors ${
+            copied
+              ? "bg-bamboo text-cloud"
+              : "bg-paper-warm text-ink-soft hover:bg-bamboo hover:text-cloud"
+          }`}
         >
           {copied ? "✓ 已复制" : "复制"}
         </button>
         <button
           title={clip.pinned ? "取消置顶" : "置顶"}
           onClick={() => void togglePin(clip.id)}
-          className="rounded-md bg-zinc-800 px-2 py-1 text-xs text-zinc-300 hover:bg-amber-600 hover:text-white"
+          className="rounded-md bg-paper-warm px-2 py-1 text-xs text-ink-soft transition-colors hover:bg-stone hover:text-cloud"
         >
           {clip.pinned ? "取消置顶" : "置顶"}
         </button>
         <button
           title="删除"
           onClick={() => void deleteClip(clip.id)}
-          className="rounded-md bg-zinc-800 px-2 py-1 text-xs text-zinc-300 hover:bg-rose-600 hover:text-white"
+          className="rounded-md bg-paper-warm px-2 py-1 text-xs text-ink-soft transition-colors hover:bg-cinnabar hover:text-cloud"
         >
           删除
         </button>

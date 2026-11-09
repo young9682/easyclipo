@@ -16,9 +16,26 @@ export default function App() {
   }, [fetchClips]);
 
   return (
-    <div className="flex h-screen flex-col bg-zinc-900 text-zinc-100">
-      <header className="px-3 pb-2 pt-3">
-        <SearchBar onOpenSettings={() => setSettingsOpen(true)} />
+    <div className="flex h-screen flex-col bg-paper font-body text-ink">
+      <header className="px-4 pb-1 pt-3.5">
+        <div className="mb-2.5 flex items-center justify-between">
+          <div className="flex items-baseline gap-2">
+            <span className="font-serif text-xl font-bold tracking-wide text-ink">
+              EasyClip
+            </span>
+            <span className="text-[10px] tracking-[0.3em] text-ink-ghost">
+              剪贴板
+            </span>
+          </div>
+          <button
+            title="设置"
+            onClick={() => setSettingsOpen(true)}
+            className="rounded-lg px-2 py-1.5 text-base leading-none text-ink-faint transition-colors hover:bg-paper-warm hover:text-ink-soft"
+          >
+            ⚙️
+          </button>
+        </div>
+        <SearchBar />
       </header>
       <CategoryTabs />
       <main className="min-h-0 flex-1 overflow-y-auto">

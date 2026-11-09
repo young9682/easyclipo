@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "../utils/tauri";
 import { useClips } from "../stores/clips";
+import { savedTheme, applyTheme, type ThemeMode } from "../utils/theme";
 import type { SettingsDto } from "../types";
 
 export function SettingsDialog({ onClose }: { onClose: () => void }) {
@@ -8,6 +9,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
   const [retention, setRetention] = useState("14");
   const [deviceId, setDeviceId] = useState("");
   const [hotkey, setHotkey] = useState("Ctrl+Shift+V");
+  const [theme, setTheme] = useState<ThemeMode>(() => savedTheme());
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -20,6 +22,11 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
       })
       .catch((e) => setErr(String(e)));
   }, []);
+
+  const switchTheme = (mode: ThemeMode) => {
+    setTheme(mode);
+    applyTheme(mode);
+  };
 
   const save = async () => {
     setErr(null);
@@ -49,16 +56,38 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl"
+        className="w-full max-w-sm rounded-2xl border border-paper-deep bg-paper p-5 shadow-[0_8px_32px_var(--color-shadow-deep)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="mb-4 text-base font-semibold text-zinc-100">设置</h2>
+        <h2 className="mb-4 font-serif text-base font-bold text-ink">设置</h2>
 
-        <label className="mb-1 block text-xs text-zinc-400">
+        <label className="mb-1 block text-xs text-ink-faint">外观</label>
+        <div className="mb-4 inline-flex rounded-lg bg-paper-warm p-0.5">
+          {(
+            [
+              { value: "light", label: "纸白" },
+              { value: "dark", label: "墨色" },
+            ] as Array<{ value: ThemeMode; label: string }>
+          ).map((o) => (
+            <button
+              key={o.value}
+              onClick={() => switchTheme(o.value)}
+              className={`rounded-md px-4 py-1 text-xs transition-all ${
+                theme === o.value
+                  ? "bg-cloud font-medium text-bamboo shadow-[0_1px_2px_var(--color-shadow)]"
+                  : "text-ink-faint hover:text-ink-soft"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+
+        <label className="mb-1 block text-xs text-ink-faint">
           保存时长（天）
         </label>
         <input
@@ -67,42 +96,42 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
           max={3650}
           value={retention}
           onChange={(e) => setRetention(e.target.value)}
-          className="mb-2 w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-100 outline-none focus:border-sky-500"
+          className="mb-2 w-full rounded-lg border border-paper-deep bg-cloud px-3 py-1.5 text-sm text-ink outline-none transition-colors focus:border-bamboo focus:ring-2 focus:ring-bamboo-glow"
         />
-        <p className="mb-4 text-xs text-zinc-500">
+        <p className="mb-4 text-xs leading-5 text-ink-faint">
           超过保存时长的未置顶条目将自动清理（默认 14 天）。
         </p>
 
-        <div className="mb-1 text-xs text-zinc-400">全局快捷键</div>
-        <div className="mb-4 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-300">
+        <div className="mb-1 text-xs text-ink-faint">全局快捷键</div>
+        <div className="mb-4 rounded-lg border border-paper-deep bg-cloud px-3 py-1.5 font-mono text-xs text-ink-soft">
           {hotkey} 唤起窗口
         </div>
 
-        <div className="mb-1 text-xs text-zinc-400">本机设备 ID</div>
-        <div className="mb-4 truncate rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 font-mono text-xs text-zinc-400">
+        <div className="mb-1 text-xs text-ink-faint">本机设备 ID</div>
+        <div className="mb-4 truncate rounded-lg border border-paper-deep bg-cloud px-3 py-1.5 font-mono text-xs text-ink-faint">
           {deviceId || "…"}
         </div>
 
-        {msg && <p className="mb-2 text-xs text-emerald-400">{msg}</p>}
-        {err && <p className="mb-2 text-xs text-rose-400">{err}</p>}
+        {msg && <p className="mb-2 text-xs text-bamboo">{msg}</p>}
+        {err && <p className="mb-2 text-xs text-cinnabar">{err}</p>}
 
         <div className="flex items-center justify-between">
           <button
             onClick={() => void clearAll()}
-            className="rounded-md border border-rose-500/40 px-3 py-1.5 text-xs text-rose-400 hover:bg-rose-500/10"
+            className="rounded-lg border border-cinnabar/40 px-3 py-1.5 text-xs text-cinnabar transition-colors hover:bg-cinnabar-bg"
           >
             清空记录
           </button>
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="rounded-md px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800"
+              className="rounded-lg px-3 py-1.5 text-xs text-ink-faint transition-colors hover:bg-paper-warm hover:text-ink-soft"
             >
               关闭
             </button>
             <button
               onClick={() => void save()}
-              className="rounded-md bg-sky-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-500"
+              className="rounded-lg bg-bamboo px-3.5 py-1.5 text-xs font-medium text-cloud transition-colors hover:bg-bamboo-light"
             >
               保存
             </button>

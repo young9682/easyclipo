@@ -4,10 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EasyClip 剪贴板</title>
+    <script>
+      // 启动前应用已保存的主题，避免闪白/闪黑
+      try {
+        if (localStorage.getItem("easyclip-theme") === "dark") {
+          document.documentElement.dataset.theme = "dark";
+        }
+      } catch (e) {}
+    </script>
     <style>
       html,
       body {
-        background: #18181b;
+        background: #f6f3ec;
+      }
+      html[data-theme="dark"],
+      html[data-theme="dark"] body {
+        background: #222120;
       }
     </style>
   </head>

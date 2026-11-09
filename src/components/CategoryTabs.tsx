@@ -2,25 +2,28 @@ import { useClips } from "../stores/clips";
 
 const CATEGORIES = ["全部", "文本", "图片", "代码", "链接", "文件"];
 
+/** 分段式分类页签（纸面胶囊 + 竹青选中态） */
 export function CategoryTabs() {
   const category = useClips((s) => s.category);
   const setCategory = useClips((s) => s.setCategory);
 
   return (
-    <div className="flex gap-1 border-b border-zinc-800 px-3 pt-1">
-      {CATEGORIES.map((c) => (
-        <button
-          key={c}
-          onClick={() => setCategory(c)}
-          className={`rounded-t-md px-3 py-1.5 text-xs transition-colors ${
-            category === c
-              ? "border-b-2 border-sky-400 font-medium text-sky-300"
-              : "text-zinc-400 hover:text-zinc-200"
-          }`}
-        >
-          {c}
-        </button>
-      ))}
+    <div className="px-4 py-1.5">
+      <div className="inline-flex rounded-lg bg-paper-warm p-0.5">
+        {CATEGORIES.map((c) => (
+          <button
+            key={c}
+            onClick={() => setCategory(c)}
+            className={`rounded-md px-3 py-1 text-xs transition-all ${
+              category === c
+                ? "bg-cloud font-medium text-bamboo shadow-[0_1px_2px_var(--color-shadow)]"
+                : "text-ink-faint hover:text-ink-soft"
+            }`}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
