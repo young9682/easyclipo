@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **EasyClip** - 轻量级剪切板管理器，支持跨端同步，可选AI敏感信息检测。
 
-**当前状态**：一期（核心功能）已实现——剪贴板监听、SQLite 存储、自动分类、过期清理、主界面 UI、全局快捷键 + 托盘。二期待做：WebSocket 同步（`sync/`、`sync-server/` 为骨架）、敏感信息检测规则库与 AI 后端（`ai/` 为骨架）。
+**当前状态**：一期（核心功能）已实现——剪贴板监听、SQLite 存储、自动分类、过期清理、主界面 UI、全局快捷键 + 托盘、网页图片捕获（OLE 虚拟文件）。二期进行中：敏感信息检测规则库已实现；WebSocket 同步（`sync/`、`sync-server/`）待实现。
 
 ## Tech Stack
 
@@ -79,10 +79,12 @@ pnpm dev
 
 ## Implementation Notes
 
-- **剪贴板监听**：Windows 无变更回调，专用线程每 800ms 轮询 `GetClipboardSequenceNumber`（windows-sys），变化时经 clipboard-win 读取 文本/CF_HDROP/CF_DIB。
+- **剪贴板监听**：Windows 无变更回调，专用线程每 800ms 轮询 `GetClipboardSequenceNumber`（windows-sys），变化时按以下链路读取：文本 → 真实文件列表（路径须存在）→ `image/png` 注册格式（浏览器复制图片）→ CF_DIB 直读 → OLE FileContents 流（Edge/Chromium 虚拟文件形态，见 `clipboard/ole.rs`）→ CF_BITMAP 兜底。
+- **读取失败重试**：剪贴板被占用/延迟渲染中时保留序号重试（最多 5 次），避免内容被永久错过。
 - **自写回去重**：`copy_clip` 写回剪贴板前把内容哈希登记到 `AppState.internal_hash`，监听线程跳过一次匹配变更。
 - **内容去重**：`content_hash`（SHA-256 前 16 字节）相同的新条目合并到已有条目（刷新 created_at 置顶）。
-- **图片**：入库转 PNG 存 BLOB；列表经 `get_image_base64` 懒加载；复制回贴时 PNG→32bpp DIB 写 CF_DIB。
+- **敏感信息检测**：本地规则库（手机号/身份证/银行卡/API 密钥/私钥块），含银行卡 Luhn 校验与身份证校验码，命中置 `is_sensitive`；二期同步上传前需确认。
+- **图片**：入库统一 PNG 存 BLOB（`normalize_image_bytes` 归一化）；列表经 `get_image_base64` 懒加载；复制回贴时 PNG→32bpp DIB 写 CF_DIB。
 - **pnpm**：包管理器 v11，构建脚手架白名单在 `pnpm-workspace.yaml`（allowBuilds: esbuild）。
 
 ## Key Rust Crates

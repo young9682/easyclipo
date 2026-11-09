@@ -95,8 +95,8 @@ fn handle_new_content(app: &AppHandle, content: ClipContent, hash: &str) {
         }
     };
 
-    // 敏感信息检测（一期为规则骨架，恒为无标记；二期填充规则库与 AI 后端）
-    let detector = ai::RuleDetector::default();
+    // 敏感信息检测：本地规则库（全局共享，正则只编译一次）
+    let detector = ai::global_rule_detector();
     let is_sensitive =
         !detector.detect(text_content.as_deref().unwrap_or("")).is_empty();
 
