@@ -38,6 +38,13 @@ jobs:
         with:
           workspaces: src-tauri
 
+      - name: Switch Ubuntu mirror (azure archive 偶发不可达)
+        if: runner.os == 'Linux'
+        run: |
+          sudo sed -i -E 's#http://(azure\.archive|archive)\.ubuntu\.com/ubuntu#https://mirrors.edge.kernel.org/ubuntu#g' \
+            /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list 2>/dev/null || true
+          grep -rh "^URIs\|^deb " /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list 2>/dev/null | head -3
+
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         env:

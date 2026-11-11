@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<title>F 竹青折笺</title>
+<defs>
+<linearGradient id="f-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3e7c55"/><stop offset="1" stop-color="#26523a"/></linearGradient>
+<filter id="f-sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#0e2417" flood-opacity="0.35"/></filter>
+</defs>
+<rect width="512" height="512" rx="112" fill="url(#f-bg)"/>
+<g filter="url(#f-sh)">
+<path d="M176 118 H312 L356 162 V374 Q356 394 336 394 H176 Q156 394 156 374 V138 Q156 118 176 118 Z" fill="#fdfbf4"/>
+</g>
+<path d="M312 118 V162 H356 Z" fill="#e6dfcc"/>
+<path d="M312 118 L356 162" fill="none" stroke="#cfc7ae" stroke-width="2"/>
+<rect x="192" y="224" width="140" height="14" rx="7" fill="#1a1a18"/>
+<rect x="192" y="266" width="100" height="14" rx="7" fill="#3d3d38"/>
+<rect x="192" y="308" width="124" height="14" rx="7" fill="#2d5a3d"/>
+<rect x="298" y="348" width="22" height="22" rx="5" fill="#b45454" transform="rotate(-8 309 359)"/>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<title>C 墨底纸笺</title>
+<defs>
+<linearGradient id="c-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d2b27"/><stop offset="1" stop-color="#1a1917"/></linearGradient>
+<linearGradient id="c-clip" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#57b47c"/><stop offset="1" stop-color="#3a7a52"/></linearGradient>
+<filter id="c-sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="20" flood-color="#000000" flood-opacity="0.45"/></filter>
+<filter id="c-cls" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.5"/></filter>
+</defs>
+<rect width="512" height="512" rx="112" fill="url(#c-bg)"/>
+<g filter="url(#c-sh)"><rect x="146" y="118" width="220" height="290" rx="22" fill="#f4f1e8"/></g>
+<g filter="url(#c-cls)"><rect x="201" y="92" width="110" height="52" rx="14" fill="url(#c-clip)"/></g>
+<rect x="219" y="111" width="74" height="12" rx="6" fill="#ffffff" opacity="0.3"/>
+<rect x="176" y="190" width="160" height="14" rx="7" fill="#1a1a18"/>
+<rect x="176" y="232" width="112" height="14" rx="7" fill="#3d3d38"/>
+<rect x="176" y="274" width="138" height="14" rx="7" fill="#3a7a52"/>
+<rect x="176" y="316" width="84" height="14" rx="7" fill="#a8a49b"/>
+<rect x="324" y="366" width="24" height="24" rx="5" fill="#b45454" transform="rotate(-8 336 378)"/>
+</svg>
