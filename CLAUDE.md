@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **EasyClip** - 轻量级剪切板管理器，支持跨端同步，可选AI敏感信息检测。
 
-**当前状态**：一期（核心功能）已实现——剪贴板监听、SQLite 存储、自动分类、过期清理、主界面 UI、全局快捷键 + 托盘、网页图片捕获（OLE 虚拟文件）。二期进行中：敏感信息检测规则库已实现；WebSocket 同步（`sync/`、`sync-server/`）待实现。
+**当前状态**：一期（核心功能）+ 敏感检测规则库 + 花笺风格双主题已完成；**跨平台已适配 Linux**（arboard，文本/图片），Windows 保留完整链路（OLE 虚拟文件等）。CI（.github/workflows/build-release.yml）按 tag 双平台构建并自动发 Release。二期待做：WebSocket 同步、AI 检测后端、SQLCipher、Linux 文件列表捕获、macOS。
 
 ## Tech Stack
 
@@ -83,7 +83,9 @@ pnpm dev
 
 ## Implementation Notes
 
-- **剪贴板监听**：Windows 无变更回调，专用线程每 800ms 轮询 `GetClipboardSequenceNumber`（windows-sys），变化时按以下链路读取：文本 → 真实文件列表（路径须存在）→ `image/png` 注册格式（浏览器复制图片）→ CF_DIB 直读 → OLE FileContents 流（Edge/Chromium 虚拟文件形态，见 `clipboard/ole.rs`）→ CF_BITMAP 兜底。
+- **跨平台剪贴板**：`clipboard/` 按平台实现——Windows（`win_watcher`：seq 轮询 + clipboard-win + Win32/OLE）与 Linux（`linux.rs`：arboard，哈希比对检测变更；文件列表暂缺）。共享管线在 `mod.rs`（handle_new_content/skip_internal_write），共享图像工具在 `imageutil.rs`。
+- **剪贴板监听**：Windows 无变更回调，专用线程每 800ms 轮询 `GetClipboardSequenceNumber`（windows-sys），变化时按以下链路读取：文本 → 真实文件列表（路径须存在）→ `image/png` 注册格式（浏览器复制图片）→ CF_DIB 直读 → OLE FileContents 流（Edge/Chromium 虚拟文件形态，见 `clipboard/ole.rs`）→ CF_BITMAP 兜底。Linux 同间隔轮询 + 内容哈希比对。
+- **发布**：打 `v*` tag 推送即触发 GitHub Actions 双平台构建（nsis/deb/appimage）并自动创建 Release；手工 `cargo build` 注意 custom-protocol（见下）。
 - **读取失败重试**：剪贴板被占用/延迟渲染中时保留序号重试（最多 5 次），避免内容被永久错过。
 - **自写回去重**：`copy_clip` 写回剪贴板前把内容哈希登记到 `AppState.internal_hash`，监听线程跳过一次匹配变更。
 - **内容去重**：`content_hash`（SHA-256 前 16 字节）相同的新条目合并到已有条目（刷新 created_at 置顶）。

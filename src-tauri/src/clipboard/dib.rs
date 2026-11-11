@@ -106,19 +106,6 @@ pub fn dib_to_png(dib: &[u8]) -> Result<Vec<u8>, String> {
     Ok(out.into_inner())
 }
 
-/// 将任意常见图片格式字节归一化为 PNG（PNG 原样返回，JPEG/GIF/WebP/BMP 解码重编码）
-pub fn normalize_image_bytes(bytes: &[u8]) -> Option<Vec<u8>> {
-    if bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
-        return Some(bytes.to_vec());
-    }
-    let img = image::load_from_memory(bytes).ok()?;
-    let mut out = std::io::Cursor::new(Vec::new());
-    img.to_rgba8()
-        .write_to(&mut out, image::ImageFormat::Png)
-        .ok()?;
-    Some(out.into_inner())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -176,17 +163,5 @@ mod tests {
         assert!(dib_to_png(&[0u8; 10]).is_err());
         // 8bpp 无调色板声明 → 数据不足
         assert!(dib_to_png(&[0u8; 40]).is_err());
-    }
-
-    #[test]
-    fn normalize_passthrough_png() {
-        let png = dib_to_png(&sample_dib_bottom_up()).unwrap();
-        assert_eq!(normalize_image_bytes(&png).as_deref(), Some(png.as_slice()));
-    }
-
-    #[test]
-    fn normalize_rejects_garbage() {
-        assert!(normalize_image_bytes(b"not an image at all").is_none());
-        assert!(normalize_image_bytes(&[]).is_none());
     }
 }

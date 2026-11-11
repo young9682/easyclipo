@@ -1,4 +1,7 @@
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![cfg_attr(
+    all(not(debug_assertions), target_os = "windows"),
+    windows_subsystem = "windows"
+)]
 
 //! EasyClip —— 轻量级剪切板管理器（一期：核心功能）。
 
@@ -23,18 +26,25 @@ pub struct AppState {
 }
 
 fn main() {
+    // 全局快捷键：Wayland 下合成器可能拒绝注册，降级为仅托盘唤起，不阻塞启动
+    let shortcut_builder = match tauri_plugin_global_shortcut::Builder::new()
+        .with_shortcuts(["ctrl+shift+v"])
+    {
+        Ok(builder) => builder
+            .with_handler(|app, _shortcut, event| {
+                if event.state() == tauri_plugin_global_shortcut::ShortcutState::Pressed {
+                    show_main_window(app);
+                }
+            })
+            .build(),
+        Err(e) => {
+            eprintln!("注册全局快捷键 Ctrl+Shift+V 失败（{e}），可通过托盘唤起窗口");
+            tauri_plugin_global_shortcut::Builder::new().build()
+        }
+    };
+
     tauri::Builder::default()
-        .plugin(
-            tauri_plugin_global_shortcut::Builder::new()
-                .with_shortcuts(["ctrl+shift+v"])
-                .expect("注册全局快捷键 Ctrl+Shift+V 失败")
-                .with_handler(|app, _shortcut, event| {
-                    if event.state() == tauri_plugin_global_shortcut::ShortcutState::Pressed {
-                        show_main_window(app);
-                    }
-                })
-                .build(),
-        )
+        .plugin(shortcut_builder)
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;

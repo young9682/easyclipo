@@ -8,6 +8,8 @@
 
 `Tauri 2` `React 18` `Rust` `SQLite`
 
+[![Build & Release](https://github.com/young9682/easyclipo/actions/workflows/build-release.yml/badge.svg)](https://github.com/young9682/easyclipo/actions/workflows/build-release.yml)
+
 </div>
 
 <div align="center">
@@ -45,20 +47,22 @@
 
 ## 🗺️ 平台支持
 
-| 平台 | 状态 |
-|---|---|
-| Windows 10 / 11 (x64) | ✅ 当前版本已支持 |
-| macOS | 🗺️ 规划中（需重写剪贴板层为 NSPasteboard） |
-| Linux | 🗺️ 规划中（X11 / Wayland 剪贴板） |
+| 平台 | 状态 | 说明 |
+|---|---|---|
+| Windows 10 / 11 (x64) | ✅ 完整支持 | 全部功能：文本/代码/链接/文件/图片捕获，含浏览器虚拟文件形态（OLE） |
+| Linux (x64) | ✅ 实验性 | 文本/图片捕获与回贴（X11 + Wayland）；文件列表捕获与回贴暂以文本路径代替；Wayland 下全局快捷键取决于合成器 |
+| macOS | 🗺️ 规划中 | 需实现 NSPasteboard 剪贴板层 |
 
-> 剪贴板捕获与写回层为 Windows 专属实现（`clipboard-win` / Win32 / OLE 数据对象）。
-> 存储、分类、敏感检测、UI 与 Tauri 框架本身均为跨平台设计，其余平台的适配主要是替换剪贴板层与打包目标（DMG / AppImage / deb），欢迎贡献。
+> 剪贴板捕获与写回层按平台实现（`src-tauri/src/clipboard/`）：Windows 走 `clipboard-win` + Win32/OLE，Linux 走 `arboard`（X11/Wayland）。存储、分类、敏感检测、UI 与 Tauri 框架本身均为跨平台设计，安装包由 GitHub Actions 在对应平台构建（NSIS / deb / AppImage），欢迎贡献。
 
 ## 🚀 快速开始
 
 ### 安装使用
 
-前往 [Releases](https://github.com/young9682/easyclipo/releases) 下载 `EasyClip_x.y.z_x64-setup.exe` 安装，或从源码构建。
+前往 [Releases](https://github.com/young9682/easyclipo/releases) 下载对应平台安装包：
+
+- Windows：`EasyClip_x.y.z_x64-setup.exe`
+- Linux：`easyclip_x.y.z_amd64.deb`（Debian/Ubuntu）或 `EasyClip_x.y.z_amd64.AppImage`（通用）
 
 ### 从源码构建
 
@@ -93,7 +97,8 @@ easyclipo/
 │       ├── main.rs       # 入口：托盘、全局快捷键、周期清理
 │       ├── commands.rs   # Tauri 命令层（前端 invoke 入口）
 │       ├── clipboard/    # 剪贴板监听 / 写回 / 分类 / 图像转换
-│       │                 #   800ms 轮询 + 失败重试 + OLE 虚拟文件读取
+│       │                 #   平台抽象：Windows（Win32/OLE）+ Linux（arboard）
+│       │                 #   800ms 轮询 + 失败重试 + 浏览器虚拟文件读取
 │       ├── storage/      # SQLite 存储模块
 │       ├── ai/           # 敏感信息检测规则库
 │       └── sync/         # 跨端同步（二期骨架）
@@ -107,14 +112,17 @@ easyclipo/
 ```
 
 **剪贴板读取链路**（按可靠性与质量取首个可读格式）：
-文本 → 真实文件列表（路径须存在）→ `image/png` 注册格式（浏览器复制图片）→ CF_DIB 直读 → OLE FileContents 流（Edge/Chromium 虚拟文件）→ CF_BITMAP 兜底
+
+- **Windows**：文本 → 真实文件列表（路径须存在）→ `image/png` 注册格式（浏览器复制图片）→ CF_DIB 直读 → OLE FileContents 流（Edge/Chromium 虚拟文件）→ CF_BITMAP 兜底
+- **Linux**：文本 → 图片（arboard RGBA → PNG），内容哈希比对检测变更
 
 ## 🗂️ Roadmap
 
 - [ ] **跨端同步**：WebSocket 自建服务器（`sync/`、`sync-server/` 骨架已就绪），设备令牌鉴权、增量同步、断线重连；敏感条目默认不同步
 - [ ] **AI 敏感检测**：在规则库之上接入 Ollama（本地）或 Claude API（语义级检测）
 - [ ] **数据库加密**：SQLCipher（当前为普通 SQLite）
-- [ ] **跨平台**：macOS / Linux 剪贴板层适配
+- [ ] **Linux 增强**：文件列表捕获（text/uri-list / gnome-copied-files）、Wayland 全局快捷键
+- [ ] **macOS**：NSPasteboard 剪贴板层
 - [ ] 单实例锁、开机自启、更多回贴目标
 
 ## 🙏 致谢

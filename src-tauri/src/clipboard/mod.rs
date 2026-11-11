@@ -1,15 +1,24 @@
-//! 剪贴板监听与写回模块（Windows）。
+//! 剪贴板监听与写回模块。
 //!
-//! Windows 没有系统级剪贴板变更回调，采用专用线程轮询
-//! `GetClipboardSequenceNumber`，变化时读取内容、分类、入库并发事件。
+//! 平台抽象：
+//! - Windows：`clipboard-win` + Win32/OLE（延迟渲染、虚拟文件、CF_DIB），见 `win_watcher`
+//! - Linux：`arboard`（X11 + Wayland data-control），哈希比对检测变更，见 `linux`
+//!
+//! 共享管线：变更检测 → 读内容 → 哈希去重/自写回守卫 → 自动分类 → 入库 → 发事件。
 
 pub mod classify;
+mod imageutil;
+
+#[cfg(target_os = "windows")]
 mod dib;
+#[cfg(target_os = "windows")]
 mod ole;
+#[cfg(target_os = "windows")]
 mod win32;
 
-use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
-use std::thread;
+#[cfg(target_os = "linux")]
+mod linux;
+
 use std::time::Duration;
 
 use tauri::{AppHandle, Emitter, Manager};
@@ -20,57 +29,43 @@ use crate::{ai, AppState};
 
 use classify::ClipContent;
 
-const POLL_INTERVAL: Duration = Duration::from_millis(800);
+/// 轮询间隔（两个平台共用）
+pub(crate) const POLL_INTERVAL: Duration = Duration::from_millis(800);
 /// 剪贴板读取失败后的最大重试次数（避免把被占用的内容永久错过）
-const MAX_READ_RETRIES: u32 = 5;
-
-/// 当前剪贴板序号（进程内全局缓存最近一次观察值）
-static LAST_SEQ: AtomicU64 = AtomicU64::new(0);
-static READ_RETRIES: AtomicU32 = AtomicU32::new(0);
+pub(crate) const MAX_READ_RETRIES: u32 = 5;
 
 pub fn start_watcher(app: AppHandle) {
-    thread::spawn(move || watcher_loop(app));
+    #[cfg(target_os = "windows")]
+    win_watcher::start(app);
+    #[cfg(target_os = "linux")]
+    linux::start(app);
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    {
+        eprintln!("当前平台暂不支持剪贴板监听");
+        let _ = app;
+    }
 }
 
-fn watcher_loop(app: AppHandle) {
-    // 初始序号设为 0：首次轮询即捕获应用启动时剪贴板中的现有内容
-    loop {
-        thread::sleep(POLL_INTERVAL);
-        let seq = win32::clipboard_sequence_number() as u64;
-        let last = LAST_SEQ.load(Ordering::Relaxed);
-        if seq == 0 || seq == last {
-            continue;
-        }
+/// 写回剪贴板（复制条目时调用）
+pub fn write_clipboard(content: ClipContent) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    return win_watcher::write(content);
+    #[cfg(target_os = "linux")]
+    return linux::write(content);
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    Err("当前平台暂不支持剪贴板写回".into())
+}
 
-        // 读取失败（剪贴板被占用/延迟渲染中）时保留序号，下个周期重试
-        let Some(content) = read_clipboard() else {
-            let retries = READ_RETRIES.fetch_add(1, Ordering::Relaxed) + 1;
-            if retries >= MAX_READ_RETRIES {
-                READ_RETRIES.store(0, Ordering::Relaxed);
-                LAST_SEQ.store(seq, Ordering::Relaxed);
-                eprintln!("剪贴板读取重试 {retries} 次后放弃（seq={seq}）");
-            }
-            continue;
-        };
-        READ_RETRIES.store(0, Ordering::Relaxed);
-        LAST_SEQ.store(seq, Ordering::Relaxed);
-
-        // 内部写回守卫：程序自身写回剪贴板的内容只跳过一次
-        let hash = classify::content_hash(&content.hash_bytes());
-        if app
-            .state::<AppState>()
-            .internal_hash
-            .lock()
-            .expect("internal_hash 锁中毒")
-            .take()
-            .as_deref()
-            == Some(hash.as_str())
-        {
-            continue;
-        }
-
-        handle_new_content(&app, content, &hash);
-    }
+/// 内部写回守卫：程序自身写回剪贴板的内容只跳过一次。
+/// 返回 true 表示本次变更来自程序自身写回，应忽略。
+fn skip_internal_write(app: &AppHandle, hash: &str) -> bool {
+    app.state::<AppState>()
+        .internal_hash
+        .lock()
+        .expect("internal_hash 锁中毒")
+        .take()
+        .as_deref()
+        == Some(hash)
 }
 
 fn handle_new_content(app: &AppHandle, content: ClipContent, hash: &str) {
@@ -127,83 +122,135 @@ fn handle_new_content(app: &AppHandle, content: ClipContent, hash: &str) {
     let _ = app.emit("clip:new", &row);
 }
 
-/// 读取剪贴板内容，按可靠性与质量取第一个可读格式。
-///
-/// 顺序：文本 → 真实文件列表 → PNG 注册格式（浏览器复制图片）→ CF_DIB →
-/// OLE FileContents 虚拟文件（Edge/Chromium 延迟渲染）→ CF_BITMAP 兜底。
-fn read_clipboard() -> Option<ClipContent> {
-    // 1. 文本（普通文本/代码/链接在此统读，类型入库时细分）
-    if let Ok(text) = clipboard_win::get_clipboard::<String, _>(clipboard_win::formats::Unicode) {
-        let text = text.trim_end_matches('\0').trim_end_matches('\r').to_string();
-        if !text.trim().is_empty() {
-            return Some(ClipContent::Text(text));
-        }
-    }
-    // 2. 文件列表（CF_HDROP）：仅当路径真实存在才采纳；
-    //    浏览器虚拟文件的合成 HDROP 指向不存在的路径，留给后面的图片分支
-    if let Ok(files) =
-        clipboard_win::get_clipboard::<Vec<String>, _>(clipboard_win::formats::FileList)
-    {
-        let files: Vec<String> = files
-            .into_iter()
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .collect();
-        if !files.is_empty() && std::path::Path::new(&files[0]).exists() {
-            return Some(ClipContent::Files(files));
-        }
-    }
-    // 3. PNG 注册格式（Chromium/Firefox 网页复制图片提供，无损）
-    if let Some(png) = read_png_format() {
-        return Some(ClipContent::Image(png));
-    }
-    // 4. CF_DIB 直读（截图工具、办公软件；浏览器延迟渲染下经合成也可得）
-    if let Ok(dib) =
-        clipboard_win::get_clipboard::<Vec<u8>, _>(clipboard_win::formats::RawData(CF_DIB))
-    {
-        if let Ok(png) = dib::dib_to_png(&dib) {
-            return Some(ClipContent::Image(png));
-        }
-    }
-    // 5. OLE FileContents IStream（Edge「复制图片」的虚拟文件形态）
-    if let Some(bytes) = ole::read_file_contents_stream() {
-        if let Some(png) = dib::normalize_image_bytes(&bytes) {
-            return Some(ClipContent::Image(png));
-        }
-    }
-    // 6. CF_BITMAP 兜底（个别程序只提供 HBITMAP）
-    if let Ok(dib) = clipboard_win::get_clipboard::<Vec<u8>, _>(clipboard_win::formats::Bitmap) {
-        if let Ok(png) = dib::dib_to_png(&dib) {
-            return Some(ClipContent::Image(png));
-        }
-    }
-    None
-}
+#[cfg(target_os = "windows")]
+mod win_watcher {
+    //! Windows 实现：`GetClipboardSequenceNumber` 轮询 + clipboard-win 读取 +
+    //! Win32/OLE 写回（文件/图片），OLE 流读取覆盖浏览器虚拟文件形态。
 
-const CF_DIB: u32 = 8;
-const PNG_FORMAT_NAME: &str = "image/png";
+    use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 
-/// 注册并读取 "image/png" 注册格式（HGLOBAL，含 PNG 魔数校验）
-fn read_png_format() -> Option<Vec<u8>> {
-    let id = win32::register_format(PNG_FORMAT_NAME)?;
-    let bytes = clipboard_win::get_clipboard::<Vec<u8>, _>(clipboard_win::formats::RawData(id))
-        .ok()?;
-    if bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
-        Some(bytes)
-    } else {
+    use super::{classify, handle_new_content, imageutil, skip_internal_write, ClipContent, MAX_READ_RETRIES, POLL_INTERVAL};
+    use super::{dib, ole, win32};
+    use tauri::AppHandle;
+
+    /// 当前剪贴板序号（进程内全局缓存最近一次观察值）
+    static LAST_SEQ: AtomicU64 = AtomicU64::new(0);
+    static READ_RETRIES: AtomicU32 = AtomicU32::new(0);
+
+    pub(super) fn start(app: AppHandle) {
+        std::thread::spawn(move || watcher_loop(app));
+    }
+
+    fn watcher_loop(app: AppHandle) {
+        // 初始序号设为 0：首次轮询即捕获应用启动时剪贴板中的现有内容
+        loop {
+            std::thread::sleep(POLL_INTERVAL);
+            let seq = win32::clipboard_sequence_number() as u64;
+            let last = LAST_SEQ.load(Ordering::Relaxed);
+            if seq == 0 || seq == last {
+                continue;
+            }
+
+            // 读取失败（剪贴板被占用/延迟渲染中）时保留序号，下个周期重试
+            let Some(content) = read_clipboard() else {
+                let retries = READ_RETRIES.fetch_add(1, Ordering::Relaxed) + 1;
+                if retries >= MAX_READ_RETRIES {
+                    READ_RETRIES.store(0, Ordering::Relaxed);
+                    LAST_SEQ.store(seq, Ordering::Relaxed);
+                    eprintln!("剪贴板读取重试 {retries} 次后放弃（seq={seq}）");
+                }
+                continue;
+            };
+            READ_RETRIES.store(0, Ordering::Relaxed);
+            LAST_SEQ.store(seq, Ordering::Relaxed);
+
+            let hash = classify::content_hash(&content.hash_bytes());
+            if skip_internal_write(&app, &hash) {
+                continue;
+            }
+
+            handle_new_content(&app, content, &hash);
+        }
+    }
+
+    /// 读取剪贴板内容，按可靠性与质量取第一个可读格式。
+    ///
+    /// 顺序：文本 → 真实文件列表 → PNG 注册格式（浏览器复制图片）→ CF_DIB →
+    /// OLE FileContents 虚拟文件（Edge/Chromium 延迟渲染）→ CF_BITMAP 兜底。
+    fn read_clipboard() -> Option<ClipContent> {
+        // 1. 文本（普通文本/代码/链接在此统读，类型入库时细分）
+        if let Ok(text) = clipboard_win::get_clipboard::<String, _>(clipboard_win::formats::Unicode) {
+            let text = text.trim_end_matches('\0').trim_end_matches('\r').to_string();
+            if !text.trim().is_empty() {
+                return Some(ClipContent::Text(text));
+            }
+        }
+        // 2. 文件列表（CF_HDROP）：仅当路径真实存在才采纳；
+        //    浏览器虚拟文件的合成 HDROP 指向不存在的路径，留给后面的图片分支
+        if let Ok(files) =
+            clipboard_win::get_clipboard::<Vec<String>, _>(clipboard_win::formats::FileList)
+        {
+            let files: Vec<String> = files
+                .into_iter()
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
+            if !files.is_empty() && std::path::Path::new(&files[0]).exists() {
+                return Some(ClipContent::Files(files));
+            }
+        }
+        // 3. PNG 注册格式（Chromium/Firefox 网页复制图片提供，无损）
+        if let Some(png) = read_png_format() {
+            return Some(ClipContent::Image(png));
+        }
+        // 4. CF_DIB 直读（截图工具、办公软件；浏览器延迟渲染下经合成也可得）
+        if let Ok(dib) =
+            clipboard_win::get_clipboard::<Vec<u8>, _>(clipboard_win::formats::RawData(CF_DIB))
+        {
+            if let Ok(png) = dib::dib_to_png(&dib) {
+                return Some(ClipContent::Image(png));
+            }
+        }
+        // 5. OLE FileContents IStream（Edge「复制图片」的虚拟文件形态）
+        if let Some(bytes) = ole::read_file_contents_stream() {
+            if let Some(png) = imageutil::normalize_image_bytes(&bytes) {
+                return Some(ClipContent::Image(png));
+            }
+        }
+        // 6. CF_BITMAP 兜底（个别程序只提供 HBITMAP）
+        if let Ok(dib) = clipboard_win::get_clipboard::<Vec<u8>, _>(clipboard_win::formats::Bitmap) {
+            if let Ok(png) = dib::dib_to_png(&dib) {
+                return Some(ClipContent::Image(png));
+            }
+        }
         None
     }
-}
 
-/// 写回剪贴板（复制条目时调用）
-pub fn write_clipboard(content: ClipContent) -> Result<(), String> {
-    match content {
-        ClipContent::Text(text) => clipboard_win::set_clipboard(
-            clipboard_win::formats::Unicode,
-            &text,
-        )
-        .map_err(|e| format!("写回文本失败：{e}")),
-        ClipContent::Files(files) => win32::set_files(&files),
-        ClipContent::Image(png) => win32::set_image(&png),
+    const CF_DIB: u32 = 8;
+    const PNG_FORMAT_NAME: &str = "image/png";
+
+    /// 注册并读取 "image/png" 注册格式（HGLOBAL，含 PNG 魔数校验）
+    fn read_png_format() -> Option<Vec<u8>> {
+        let id = win32::register_format(PNG_FORMAT_NAME)?;
+        let bytes = clipboard_win::get_clipboard::<Vec<u8>, _>(clipboard_win::formats::RawData(id))
+            .ok()?;
+        if bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
+            Some(bytes)
+        } else {
+            None
+        }
+    }
+
+    /// 写回剪贴板（文本 / 文件 / 图片）
+    pub(super) fn write(content: ClipContent) -> Result<(), String> {
+        match content {
+            ClipContent::Text(text) => clipboard_win::set_clipboard(
+                clipboard_win::formats::Unicode,
+                &text,
+            )
+            .map_err(|e| format!("写回文本失败：{e}")),
+            ClipContent::Files(files) => win32::set_files(&files),
+            ClipContent::Image(png) => win32::set_image(&png),
+        }
     }
 }
