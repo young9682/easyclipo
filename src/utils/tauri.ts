@@ -203,6 +203,20 @@ async function mockInvoke<T>(
         deviceId: "mock-device-01",
         hotkey: "Ctrl+Shift+V",
       } as T;
+    case "get_system_info":
+      return {
+        appVersion: "0.3.0",
+        os: "windows",
+        arch: "x86_64",
+        tauriVersion: "2.x",
+      } as T;
+    case "open_issue_page": {
+      const url = `https://github.com/young9682/easyclipo/issues/new?title=${encodeURIComponent(
+        String(args.title ?? "")
+      )}&body=${encodeURIComponent(String(args.body ?? ""))}`;
+      if (typeof window !== "undefined") window.open(url, "_blank");
+      return url as T;
+    }
     case "set_setting":
       return undefined as T;
     case "clear_all": {

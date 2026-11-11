@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CategoryTabs } from "./components/CategoryTabs";
 import { ClipList } from "./components/ClipList";
+import { FeedbackDialog } from "./components/FeedbackDialog";
 import { SearchBar } from "./components/SearchBar";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { useClipEvents } from "./hooks/useClips";
@@ -10,6 +11,7 @@ export default function App() {
   useClipEvents();
   const fetchClips = useClips((s) => s.fetchClips);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   useEffect(() => {
     void fetchClips(true);
@@ -27,13 +29,22 @@ export default function App() {
               剪贴板
             </span>
           </div>
-          <button
-            title="设置"
-            onClick={() => setSettingsOpen(true)}
-            className="rounded-lg px-2 py-1.5 text-base leading-none text-ink-faint transition-colors hover:bg-paper-warm hover:text-ink-soft"
-          >
-            ⚙️
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              title="反馈"
+              onClick={() => setFeedbackOpen(true)}
+              className="rounded-lg px-2 py-1.5 text-base leading-none text-ink-faint transition-colors hover:bg-paper-warm hover:text-ink-soft"
+            >
+              💬
+            </button>
+            <button
+              title="设置"
+              onClick={() => setSettingsOpen(true)}
+              className="rounded-lg px-2 py-1.5 text-base leading-none text-ink-faint transition-colors hover:bg-paper-warm hover:text-ink-soft"
+            >
+              ⚙️
+            </button>
+          </div>
         </div>
         <SearchBar />
       </header>
@@ -42,8 +53,12 @@ export default function App() {
         <ClipList />
       </main>
       {settingsOpen && (
-        <SettingsDialog onClose={() => setSettingsOpen(false)} />
+        <SettingsDialog
+          onClose={() => setSettingsOpen(false)}
+          onOpenFeedback={() => setFeedbackOpen(true)}
+        />
       )}
+      {feedbackOpen && <FeedbackDialog onClose={() => setFeedbackOpen(false)} />}
     </div>
   );
 }

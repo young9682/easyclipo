@@ -21,6 +21,13 @@ export interface SettingsDto {
   hotkey: string;
 }
 
+export interface SystemInfoDto {
+  appVersion: string;
+  os: string;
+  arch: string;
+  tauriVersion: string;
+}
+
 export const TYPE_LABELS: Record<ContentType, string> = {
   text: "文本",
   image: "图片",

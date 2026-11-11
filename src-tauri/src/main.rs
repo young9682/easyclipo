@@ -45,6 +45,7 @@ fn main() {
 
     tauri::Builder::default()
         .plugin(shortcut_builder)
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
@@ -101,6 +102,8 @@ fn main() {
             commands::get_settings,
             commands::set_setting,
             commands::clear_all,
+            commands::get_system_info,
+            commands::open_issue_page,
         ])
         .run(tauri::generate_context!())
         .expect("EasyClip 启动失败");

@@ -4,7 +4,13 @@ import { useClips } from "../stores/clips";
 import { savedTheme, applyTheme, type ThemeMode } from "../utils/theme";
 import type { SettingsDto } from "../types";
 
-export function SettingsDialog({ onClose }: { onClose: () => void }) {
+export function SettingsDialog({
+  onClose,
+  onOpenFeedback,
+}: {
+  onClose: () => void;
+  onOpenFeedback: () => void;
+}) {
   const refresh = useClips((s) => s.refresh);
   const [retention, setRetention] = useState("14");
   const [deviceId, setDeviceId] = useState("");
@@ -110,6 +116,19 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
         <div className="mb-1 text-xs text-ink-faint">本机设备 ID</div>
         <div className="mb-4 truncate rounded-lg border border-paper-deep bg-cloud px-3 py-1.5 font-mono text-xs text-ink-faint">
           {deviceId || "…"}
+        </div>
+
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-bamboo-glow bg-bamboo-mist px-3 py-2.5">
+          <span className="text-xs text-ink-soft">遇到问题或有想法？</span>
+          <button
+            onClick={() => {
+              onClose();
+              onOpenFeedback();
+            }}
+            className="rounded-md bg-bamboo px-3 py-1.5 text-xs font-medium text-cloud transition-colors hover:bg-bamboo-light"
+          >
+            反馈问题
+          </button>
         </div>
 
         {msg && <p className="mb-2 text-xs text-bamboo">{msg}</p>}

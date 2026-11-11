@@ -91,6 +91,7 @@ pnpm dev
 - **内容去重**：`content_hash`（SHA-256 前 16 字节）相同的新条目合并到已有条目（刷新 created_at 置顶）。
 - **敏感信息检测**：本地规则库（手机号/身份证/银行卡/API 密钥/私钥块），含银行卡 Luhn 校验与身份证校验码，命中置 `is_sensitive`；二期同步上传前需确认。
 - **图片**：入库统一 PNG 存 BLOB（`normalize_image_bytes` 归一化）；列表经 `get_image_base64` 懒加载；复制回贴时 PNG→32bpp DIB 写 CF_DIB。
+- **用户反馈**：`FeedbackDialog`（💬 入口）→ `open_issue_page` 命令拼预填 `issues/new?title=&body=` URL 经 tauri-plugin-opener 打开浏览器；`get_system_info` 提供版本/系统信息（不含剪贴板内容）。刻意不使用 `.github/ISSUE_TEMPLATE`（模板选择页会与预填参数冲突）。
 - **pnpm**：包管理器 v11，构建脚手架白名单在 `pnpm-workspace.yaml`（allowBuilds: esbuild）。
 
 ## Key Rust Crates

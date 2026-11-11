@@ -5,7 +5,7 @@ use std::sync::MutexGuard;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
 use serde::Serialize;
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use crate::clipboard::{self, classify::ClipContent};
 use crate::storage::{ClipRow, ContentType, ListQuery, Storage};
@@ -184,4 +184,37 @@ pub fn set_setting(state: State<'_, AppState>, key: String, value: String) -> Re
 #[tauri::command]
 pub fn clear_all(state: State<'_, AppState>) -> Result<usize, String> {
     storage(&state)?.clear_all().map_err(|e| e.to_string())
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SystemInfo {
+    pub app_version: String,
+    pub os: String,
+    pub arch: String,
+    pub tauri_version: String,
+}
+
+/// 系统信息（用户反馈附带给 Issue）
+#[tauri::command]
+pub fn get_system_info(app: AppHandle) -> SystemInfo {
+    SystemInfo {
+        app_version: app.package_info().version.to_string(),
+        os: std::env::consts::OS.to_string(),
+        arch: std::env::consts::ARCH.to_string(),
+        tauri_version: tauri::VERSION.to_string(),
+    }
+}
+
+/// 拼预填 Issue 链接并用系统默认浏览器打开；返回 URL 供前端兜底展示
+#[tauri::command]
+pub fn open_issue_page(_app: AppHandle, title: String, body: String) -> Result<String, String> {
+    let url = format!(
+        "https://github.com/young9682/easyclipo/issues/new?title={}&body={}",
+        urlencoding::encode(&title),
+        urlencoding::encode(&body),
+    );
+    tauri_plugin_opener::open_url(&url, None::<&str>)
+        .map_err(|e| format!("打开浏览器失败：{e}"))?;
+    Ok(url)
 }
