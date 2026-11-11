@@ -11,8 +11,12 @@
 | `icon-e-plum-blossom.svg` | E 梅笺：竹青勾白梅 + 朱砂花蕊 |
 | `icon-f-folded-note.svg` | F 竹青折笺：竹青底 + 折角素笺 |
 
-## 选定后的落地步骤
+## 选定记录
 
-1. 将选中 SVG 以 1024×1024 渲染为 PNG（透明圆角，来源即本 SVG）。
-2. `pnpm tauri icon <png>` 重新生成 `src-tauri/icons/` 全套（ico/icns/png）。
-3. 更新或退役 `scripts/gen-icon.mjs` 占位生成脚本。
+**2026-11-12 选定方案 E（梅笺，`icon-e-plum-blossom.svg`）**，已落地：
+`scripts/gen-icon.mjs` 现生成该设计为项目根目录 `app-icon.svg`，`pnpm tauri icon app-icon.svg` 产出 `src-tauri/icons/` 全套（ico/icns/png/Appx，另含仓库既有的 android/ios 目录）。其余候选保留备选。
+
+## 后续更换图标的步骤
+
+1. `node scripts/gen-icon.mjs`（或把新 SVG 内容替换进该脚本）生成 `app-icon.svg`。
+2. `pnpm tauri icon app-icon.svg` 重新生成全套图标。

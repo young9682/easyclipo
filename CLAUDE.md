@@ -29,7 +29,7 @@ easyclipo/
 │   │   ├── sync/       # WebSocket 同步模块（二期骨架）
 │   │   └── ai/         # AI 敏感信息检测模块（二期骨架）
 │   ├── capabilities/   # Tauri v2 权限配置
-│   ├── icons/          # 应用图标（node scripts/gen-icon.mjs 生成源图 + tauri icon 产出）
+│   ├── icons/          # 应用图标（node scripts/gen-icon.mjs 生成 app-icon.svg 设计源 + pnpm tauri icon app-icon.svg 产出）
 │   ├── Cargo.toml
 │   └── tauri.conf.json
 ├── src/                # React 前端
