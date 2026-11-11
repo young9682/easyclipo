@@ -70,6 +70,10 @@ cargo test --manifest-path src-tauri/Cargo.toml
 # 仅检查 Rust 编译
 cargo check --manifest-path src-tauri/Cargo.toml
 
+# ⚠️ 生产可运行的前端资源需 custom-protocol feature（tauri build 自动开启；
+#    用裸 cargo build --release 构建的 exe 会因缺少它而去连 devUrl，报"拒绝连接"）
+cargo build --release --features custom-protocol
+
 # 启动同步服务器（二期）
 cd sync-server && cargo run
 
