@@ -199,7 +199,7 @@ impl Storage {
     pub fn list_clips(&self, q: &ListQuery) -> Result<Vec<ClipRow>, rusqlite::Error> {
         let sql = "SELECT id, content_type, text_content, image_blob IS NOT NULL, category, source_device, created_at, expires_at, is_synced, is_sensitive, pinned, content_hash
                    FROM clips
-                   WHERE (?1 IS NULL OR instr(COALESCE(text_content, ''), ?1) > 0)
+                   WHERE (?1 IS NULL OR instr(lower(COALESCE(text_content, '')), lower(?1)) > 0)
                      AND (?2 IS NULL OR content_type = ?2)
                      AND (?3 IS NULL OR category = ?3)
                    ORDER BY pinned DESC, created_at DESC

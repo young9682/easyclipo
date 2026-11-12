@@ -1,6 +1,6 @@
 [package]
 name = "easyclip"
-version = "0.3.0"
+version = "0.4.0"
 description = "轻量级剪切板管理器"
 authors = ["young86"]
 edition = "2021"

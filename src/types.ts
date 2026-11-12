@@ -36,10 +36,11 @@ export const TYPE_LABELS: Record<ContentType, string> = {
   file: "文件",
 };
 
-export const TYPE_ICONS: Record<ContentType, string> = {
-  text: "📝",
-  image: "🖼️",
-  code: "💻",
-  link: "🔗",
-  file: "📁",
+/** 类型印章字（梅影方案的条目小戳） */
+export const TYPE_STAMPS: Record<ContentType, string> = {
+  text: "文",
+  image: "图",
+  code: "码",
+  link: "链",
+  file: "档",
 };

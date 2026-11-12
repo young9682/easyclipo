@@ -1,7 +1,7 @@
 {
   "name": "easyclip",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "轻量级剪切板管理器",
   "author": "young86",
   "type": "module",
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.5.0",
+    "lucide-react": "^1.72.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^5.0.3"
@@ -28,6 +29,8 @@
     "vite": "^6.3.5"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

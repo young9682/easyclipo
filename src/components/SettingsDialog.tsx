@@ -60,33 +60,37 @@ export function SettingsDialog({
     }
   };
 
+  const seg = (active: boolean) =>
+    `rounded-[3px] border px-3 py-[3px] text-xs transition-colors ${
+      active
+        ? "border-bamboo-deep bg-bamboo-deep text-petal"
+        : "border-paper-deep text-ink-faint hover:border-bamboo hover:text-bamboo"
+    }`;
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-paper-deep bg-paper p-5 shadow-[0_8px_32px_var(--color-shadow-deep)]"
+        className="w-full max-w-sm rounded-md border border-paper-deep bg-paper p-5 shadow-[0_8px_32px_var(--color-shadow-deep)]"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="mb-4 font-serif text-base font-bold text-ink">设置</h2>
 
         <label className="mb-1 block text-xs text-ink-faint">外观</label>
-        <div className="mb-4 inline-flex rounded-lg bg-paper-warm p-0.5">
+        <div className="mb-4 flex gap-1.5">
           {(
             [
-              { value: "light", label: "纸白" },
-              { value: "dark", label: "墨色" },
+              { value: "light", label: "昼色 · 纸白" },
+              { value: "dark", label: "夜色 · 墨卷" },
             ] as Array<{ value: ThemeMode; label: string }>
           ).map((o) => (
             <button
               key={o.value}
+              type="button"
               onClick={() => switchTheme(o.value)}
-              className={`rounded-md px-4 py-1 text-xs transition-all ${
-                theme === o.value
-                  ? "bg-cloud font-medium text-bamboo shadow-[0_1px_2px_var(--color-shadow)]"
-                  : "text-ink-faint hover:text-ink-soft"
-              }`}
+              className={seg(theme === o.value)}
             >
               {o.label}
             </button>
@@ -102,30 +106,31 @@ export function SettingsDialog({
           max={3650}
           value={retention}
           onChange={(e) => setRetention(e.target.value)}
-          className="mb-2 w-full rounded-lg border border-paper-deep bg-cloud px-3 py-1.5 text-sm text-ink outline-none transition-colors focus:border-bamboo focus:ring-2 focus:ring-bamboo-glow"
+          className="mb-2 w-full rounded-[4px] border border-paper-deep bg-cloud px-3 py-1.5 text-sm text-ink outline-none transition-colors focus:border-bamboo"
         />
         <p className="mb-4 text-xs leading-5 text-ink-faint">
           超过保存时长的未置顶条目将自动清理（默认 14 天）。
         </p>
 
         <div className="mb-1 text-xs text-ink-faint">全局快捷键</div>
-        <div className="mb-4 rounded-lg border border-paper-deep bg-cloud px-3 py-1.5 font-mono text-xs text-ink-soft">
+        <div className="mb-4 rounded-[4px] border border-paper-deep bg-cloud px-3 py-1.5 font-mono text-xs text-ink-soft">
           {hotkey} 唤起窗口
         </div>
 
         <div className="mb-1 text-xs text-ink-faint">本机设备 ID</div>
-        <div className="mb-4 truncate rounded-lg border border-paper-deep bg-cloud px-3 py-1.5 font-mono text-xs text-ink-faint">
+        <div className="mb-4 truncate rounded-[4px] border border-paper-deep bg-cloud px-3 py-1.5 font-mono text-xs text-ink-faint">
           {deviceId || "…"}
         </div>
 
-        <div className="mb-4 flex items-center justify-between rounded-lg border border-bamboo-glow bg-bamboo-mist px-3 py-2.5">
+        <div className="mb-4 flex items-center justify-between rounded-[4px] border border-bamboo-glow bg-bamboo-mist px-3 py-2.5">
           <span className="text-xs text-ink-soft">遇到问题或有想法？</span>
           <button
+            type="button"
             onClick={() => {
               onClose();
               onOpenFeedback();
             }}
-            className="rounded-md bg-bamboo px-3 py-1.5 text-xs font-medium text-cloud transition-colors hover:bg-bamboo-light"
+            className="rounded-[3px] bg-bamboo-deep px-3 py-1.5 text-xs font-medium text-petal transition-[filter] hover:brightness-110"
           >
             反馈问题
           </button>
@@ -136,21 +141,24 @@ export function SettingsDialog({
 
         <div className="flex items-center justify-between">
           <button
+            type="button"
             onClick={() => void clearAll()}
-            className="rounded-lg border border-cinnabar/40 px-3 py-1.5 text-xs text-cinnabar transition-colors hover:bg-cinnabar-bg"
+            className="rounded-[4px] border border-cinnabar/40 px-3 py-1.5 text-xs text-cinnabar transition-colors hover:bg-cinnabar-bg"
           >
             清空记录
           </button>
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={onClose}
-              className="rounded-lg px-3 py-1.5 text-xs text-ink-faint transition-colors hover:bg-paper-warm hover:text-ink-soft"
+              className="rounded-[4px] px-3 py-1.5 text-xs text-ink-faint transition-colors hover:bg-paper-warm hover:text-ink-soft"
             >
               关闭
             </button>
             <button
+              type="button"
               onClick={() => void save()}
-              className="rounded-lg bg-bamboo px-3.5 py-1.5 text-xs font-medium text-cloud transition-colors hover:bg-bamboo-light"
+              className="rounded-[4px] bg-bamboo-deep px-3.5 py-1.5 text-xs font-medium text-petal transition-[filter] hover:brightness-110"
             >
               保存
             </button>

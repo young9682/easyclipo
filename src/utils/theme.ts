@@ -19,10 +19,12 @@ export function applyTheme(mode: ThemeMode) {
   }
 }
 
+/** 梅影主题默认夜色（墨卷），昼色需显式选择 */
 export function savedTheme(): ThemeMode {
   try {
-    return localStorage.getItem(STORAGE_KEY) === "dark" ? "dark" : "light";
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved === "light" ? "light" : "dark";
   } catch {
-    return "light";
+    return "dark";
   }
 }

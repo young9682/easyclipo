@@ -1,33 +1,39 @@
 @import "tailwindcss";
 
 /*
- * 设计令牌 —— 参考「花笺」floral-notepaper 的纸墨美学：
- * 暖纸底色、四级墨色层次、竹青点缀、细边框软阴影。
- * 纸白（默认）与墨色（深色）双主题，经 html[data-theme] 切换。
+ * 设计令牌 —— 「梅影」夜窗墨卷主题（方案 B）：
+ * 墨色渐变纸面、墨竹立轴侧栏、卷条直角条目、梅枝点朱砂。
+ * 夜色（默认）与昼色（纸白）双主题，经 html[data-theme] 切换。
  */
 @theme {
-  /* 纸面 */
-  --color-paper: #f6f3ec;
-  --color-paper-warm: #f0ebe0;
-  --color-paper-deep: #e8e1d3;
+  /* 纸面（昼：暖纸；夜：墨卷） */
+  --color-paper: #f2edde;
+  --color-paper-warm: #e9e3d0;
+  --color-paper-deep: #ddd4bd;
   /* 墨色四级 */
-  --color-ink: #1a1a18;
-  --color-ink-soft: #3d3d38;
-  --color-ink-faint: #8a8a80;
-  --color-ink-ghost: #b8b8ae;
-  /* 竹青点缀 */
+  --color-ink: #2b2a22;
+  --color-ink-soft: #5d594b;
+  --color-ink-faint: #918c79;
+  --color-ink-ghost: #b0a996;
+  /* 卷面（条目/输入框底） */
+  --color-cloud: #faf6ea;
+  /* 竹青 */
   --color-bamboo: #2d5a3d;
   --color-bamboo-light: #3a7a52;
-  --color-bamboo-mist: #e8f0eb;
-  --color-bamboo-glow: #d4e8da;
+  --color-bamboo-deep: #24472f;
+  --color-bamboo-mist: #e2efe5;
+  --color-bamboo-glow: #cfe5d6;
+  /* 立轴侧栏 / 梅瓣 / 梅枝 */
+  --color-rail: #2d5a3d;
+  --color-petal: #ffffff;
+  --color-stroke: #6b675a;
   /* 辅助 */
-  --color-stone: #6b6b62;
-  --color-cloud: #ffffff;
-  --color-shadow: rgba(26, 26, 24, 0.06);
-  --color-shadow-deep: rgba(26, 26, 24, 0.12);
+  --color-stone: #6b675a;
+  --color-shadow: rgba(43, 42, 34, 0.08);
+  --color-shadow-deep: rgba(43, 42, 34, 0.16);
   /* 朱砂警示（敏感信息） */
   --color-cinnabar: #b45454;
-  --color-cinnabar-bg: #fbeeec;
+  --color-cinnabar-bg: #f6e7e2;
   --color-cinnabar-deep: #9c3d3d;
 
   --font-display:
@@ -41,26 +47,30 @@
   --font-mono: "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
 }
 
-/* 墨色主题覆盖（Tailwind v4 工具类引用 CSS 变量，覆盖即全站生效） */
+/* 夜色（墨卷）覆盖 —— 默认主题，html[data-theme="dark"] */
 :root[data-theme="dark"] {
-  --color-paper: #222120;
-  --color-paper-warm: #2c2a27;
-  --color-paper-deep: #3c3935;
-  --color-ink: #e5e1da;
-  --color-ink-soft: #b5b1a8;
-  --color-ink-faint: #928f87;
-  --color-ink-ghost: #706d67;
-  --color-bamboo: #4faa70;
-  --color-bamboo-light: #5fc085;
-  --color-bamboo-mist: #1c2e22;
+  --color-paper: #242320;
+  --color-paper-warm: #2c2b26;
+  --color-paper-deep: #3b3930;
+  --color-ink: #ece5d2;
+  --color-ink-soft: #b5ae9b;
+  --color-ink-faint: #847e6d;
+  --color-ink-ghost: #6d6961;
+  --color-cloud: #2a2923;
+  --color-bamboo: #7cb894;
+  --color-bamboo-light: #8fc7a5;
+  --color-bamboo-deep: #3e6b52;
+  --color-bamboo-mist: #2b3b31;
   --color-bamboo-glow: #243a2c;
-  --color-stone: #8a8880;
-  --color-cloud: #1a1917;
-  --color-shadow: rgba(0, 0, 0, 0.3);
+  --color-rail: #171610;
+  --color-petal: #efe9d8;
+  --color-stroke: #8d8776;
+  --color-stone: #847e6d;
+  --color-shadow: rgba(0, 0, 0, 0.32);
   --color-shadow-deep: rgba(0, 0, 0, 0.5);
-  --color-cinnabar: #d98a8a;
-  --color-cinnabar-bg: rgba(220, 90, 90, 0.14);
-  --color-cinnabar-deep: #e0a0a0;
+  --color-cinnabar: #cf7d72;
+  --color-cinnabar-bg: #3c2c27;
+  --color-cinnabar-deep: #e0a396;
 }
 
 html {
@@ -72,6 +82,15 @@ html,
 body,
 #root {
   height: 100%;
+}
+
+/* 墨色/暖纸渐变纸面 */
+body {
+  background: linear-gradient(160deg, #f2edde, #e9e3d0);
+}
+
+:root[data-theme="dark"] body {
+  background: linear-gradient(160deg, #242320, #1b1a16);
 }
 
 ::-webkit-scrollbar {

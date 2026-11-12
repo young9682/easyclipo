@@ -5,9 +5,9 @@ import type { SystemInfoDto } from "../types";
 type FeedbackKind = "bug" | "idea" | "other";
 
 const KINDS: Array<{ value: FeedbackKind; label: string; prefix: string }> = [
-  { value: "bug", label: "🐛 Bug 反馈", prefix: "[Bug]" },
-  { value: "idea", label: "💡 功能建议", prefix: "[建议]" },
-  { value: "other", label: "💬 其他", prefix: "[反馈]" },
+  { value: "bug", label: "Bug 反馈", prefix: "[Bug]" },
+  { value: "idea", label: "功能建议", prefix: "[建议]" },
+  { value: "other", label: "其他", prefix: "[反馈]" },
 ];
 
 const ISSUE_NEW_URL = "https://github.com/young9682/easyclipo/issues/new";
@@ -56,11 +56,11 @@ export function FeedbackDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/40 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-4 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-paper-deep bg-paper p-5 shadow-[0_8px_32px_var(--color-shadow-deep)]"
+        className="w-full max-w-sm rounded-md border border-paper-deep bg-paper p-5 shadow-[0_8px_32px_var(--color-shadow-deep)]"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="mb-4 font-serif text-base font-bold text-ink">
@@ -77,13 +77,14 @@ export function FeedbackDialog({ onClose }: { onClose: () => void }) {
               href={done}
               target="_blank"
               rel="noreferrer"
-              className="mb-4 block truncate rounded-lg border border-paper-deep bg-cloud px-3 py-2 text-xs text-bamboo hover:underline"
+              className="mb-4 block truncate rounded-[4px] border border-paper-deep bg-cloud px-3 py-2 text-xs text-bamboo hover:underline"
             >
               未自动打开？点此前往 →
             </a>
             <button
+              type="button"
               onClick={onClose}
-              className="w-full rounded-lg bg-bamboo px-3 py-1.5 text-xs font-medium text-cloud hover:bg-bamboo-light"
+              className="w-full rounded-[4px] bg-bamboo-deep px-3 py-1.5 text-xs font-medium text-petal transition-[filter] hover:brightness-110"
             >
               完成
             </button>
@@ -91,15 +92,16 @@ export function FeedbackDialog({ onClose }: { onClose: () => void }) {
         ) : (
           <>
             <label className="mb-1 block text-xs text-ink-faint">类型</label>
-            <div className="mb-3 inline-flex rounded-lg bg-paper-warm p-0.5">
+            <div className="mb-3 flex gap-1.5">
               {KINDS.map((k) => (
                 <button
                   key={k.value}
+                  type="button"
                   onClick={() => setKind(k.value)}
-                  className={`rounded-md px-2.5 py-1 text-xs transition-all ${
+                  className={`rounded-[3px] border px-2.5 py-[3px] text-xs transition-colors ${
                     kind === k.value
-                      ? "bg-cloud font-medium text-bamboo shadow-[0_1px_2px_var(--color-shadow)]"
-                      : "text-ink-faint hover:text-ink-soft"
+                      ? "border-bamboo-deep bg-bamboo-deep text-petal"
+                      : "border-paper-deep text-ink-faint hover:border-bamboo hover:text-bamboo"
                   }`}
                 >
                   {k.label}
@@ -115,7 +117,7 @@ export function FeedbackDialog({ onClose }: { onClose: () => void }) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="一句话概括问题或建议"
               maxLength={100}
-              className="mb-3 w-full rounded-lg border border-paper-deep bg-cloud px-3 py-1.5 text-sm text-ink outline-none transition-colors placeholder-ink-ghost focus:border-bamboo focus:ring-2 focus:ring-bamboo-glow"
+              className="mb-3 w-full rounded-[4px] border border-paper-deep bg-cloud px-3 py-1.5 text-sm text-ink outline-none transition-colors placeholder-ink-ghost focus:border-bamboo"
             />
 
             <label className="mb-1 block text-xs text-ink-faint">
@@ -129,7 +131,7 @@ export function FeedbackDialog({ onClose }: { onClose: () => void }) {
               onChange={(e) => setDetail(e.target.value.slice(0, MAX_DETAIL))}
               rows={4}
               placeholder="复现步骤 / 期望行为 / 实际行为…"
-              className="mb-3 w-full resize-none rounded-lg border border-paper-deep bg-cloud px-3 py-1.5 text-sm leading-relaxed text-ink outline-none transition-colors placeholder-ink-ghost focus:border-bamboo focus:ring-2 focus:ring-bamboo-glow"
+              className="mb-3 w-full resize-none rounded-[4px] border border-paper-deep bg-cloud px-3 py-1.5 text-sm leading-relaxed text-ink outline-none transition-colors placeholder-ink-ghost focus:border-bamboo"
             />
 
             <label className="mb-4 flex cursor-pointer items-center gap-2 text-xs text-ink-soft">
@@ -146,15 +148,17 @@ export function FeedbackDialog({ onClose }: { onClose: () => void }) {
 
             <div className="flex justify-end gap-2">
               <button
+                type="button"
                 onClick={onClose}
-                className="rounded-lg px-3 py-1.5 text-xs text-ink-faint hover:bg-paper-warm hover:text-ink-soft"
+                className="rounded-[4px] px-3 py-1.5 text-xs text-ink-faint hover:bg-paper-warm hover:text-ink-soft"
               >
                 取消
               </button>
               <button
+                type="button"
                 onClick={() => void submit()}
                 disabled={!canSubmit}
-                className="rounded-lg bg-bamboo px-3.5 py-1.5 text-xs font-medium text-cloud transition-opacity hover:bg-bamboo-light disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-[4px] bg-bamboo-deep px-3.5 py-1.5 text-xs font-medium text-petal transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
               >
                 前往提交
               </button>

@@ -11,15 +11,16 @@ export function ClipList() {
   if (!loading && clips.length === 0) return <EmptyState />;
 
   return (
-    <div className="flex flex-col gap-2 px-4 py-2">
+    <div className="relative flex flex-col gap-2 px-3.5 py-2">
       {clips.map((clip) => (
         <ClipItem key={clip.id} clip={clip} />
       ))}
       {hasMore && (
         <button
+          type="button"
           onClick={loadMore}
           disabled={loading}
-          className="mx-auto my-2 rounded-lg px-4 py-1.5 text-xs text-ink-faint transition-colors hover:bg-paper-warm hover:text-ink-soft disabled:opacity-50"
+          className="mx-auto my-2 rounded-[3px] border border-paper-deep px-4 py-1.5 text-xs text-ink-faint transition-colors hover:border-bamboo hover:text-bamboo disabled:opacity-50"
         >
           {loading ? "加载中…" : "加载更多"}
         </button>
